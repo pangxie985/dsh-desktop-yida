@@ -1,0 +1,5 @@
+# 标准 DSH profile bundle：本文件让插件作为一个组合层被挂载。
+# package.json 的 dsh.bundle.patch 指向本文件，插件管理器据此识别为 bundle。
+- insert:
+    - id: dsh-desktop-yida
+      name: dsh-desktop-yida

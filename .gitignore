@@ -1,0 +1,23 @@
+# 依赖与本地产物（开源仓库不包含这些）
+node_modules/
+vendor/
+.cache/
+
+# 安装脚本的备份
+*.bak-*
+
+# 运行产物
+out/
+yida-out/
+*.tgz
+*.log
+
+# 编辑器 / 系统
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# 本地登录态与临时文件（任何情况下都不要提交）
+.auth/
+auth-profile*.json

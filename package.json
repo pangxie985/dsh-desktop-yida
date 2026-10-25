@@ -1,0 +1,63 @@
+{
+  "name": "dsh-desktop-yida",
+  "version": "0.2.0",
+  "description": "DeepSeek Harness（DSH）插件：用 AI 创建、编辑钉钉宜搭（Yida）应用，并在右侧栏「宜搭工作台」里查看与打开应用。基于开源 CLI OpenYida 封装。",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib/**/*",
+    "scripts/**/*",
+    "cordis.patch.yml",
+    "README.md",
+    "LICENSE"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": [],
+      "external": []
+    }
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "keywords": [
+    "deepseek-harness",
+    "dsh",
+    "dsh-plugin",
+    "yida",
+    "aliwork",
+    "dingtalk",
+    "openyida",
+    "low-code",
+    "ai-agent"
+  ],
+  "scripts": {
+    "test": "node test/cli.test.mjs && node test/plugin.test.mjs && node test/client.test.mjs",
+    "smoke": "node test/smoke.mjs",
+    "install:desktop": "node scripts/install.mjs --profile desktop",
+    "install:web": "node scripts/install.mjs --profile web",
+    "uninstall": "node scripts/install.mjs --uninstall"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pangxie985/dsh-desktop-yida.git"
+  },
+  "homepage": "https://github.com/pangxie985/dsh-desktop-yida#readme",
+  "bugs": {
+    "url": "https://github.com/pangxie985/dsh-desktop-yida/issues"
+  },
+  "author": "dsh-desktop-yida contributors",
+  "license": "MIT",
+  "dependencies": {
+    "openyida": "^2026.10.23-2"
+  }
+}
