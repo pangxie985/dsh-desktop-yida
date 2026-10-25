@@ -1,0 +1,21 @@
+# 提交到 awesome-dsh-plugin（dshmarket 的插件目录数据源）的条目
+#
+# 用法：把这个文件放到对方仓库的 data/plugins/ 下，文件名必须是：
+#   pangxie985__dsh-desktop-yida.yml
+#
+# 规则来源：https://github.com/awesome-dsh-plugin/awesome-dsh-plugin/blob/main/contributing.md
+#   - 一个 PR 只加这一个文件，不要手改 README（README 由 data/plugins/*.yml 生成）
+#   - 仓库需声明 dsh.bundle（本仓库已声明）+ 根目录有 cordis.patch.yml（已有）
+#   - 仓库需满 1 天（CI 自动检查）：本仓库创建于 2026-10-25T04:24:46Z
+#   - 仓库需打 dsh-plugin topic（已有）
+#   - description 只能陈述功能，不带营销词，且必须与代码一致（本插件的 14 个工具见 lib/index.js）
+#
+# 可用 category 取值：agi ui usage theme model identity session memory tools
+#                     wsl browser vision voice docs skill workflow git notify dev security remote market fun
+
+url: https://github.com/pangxie985/dsh-desktop-yida
+name: pangxie985/dsh-desktop-yida
+category: tools
+description:
+  en: Gives the agent 14 tools to create and edit DingTalk Yida apps (apps, forms, pages, schema, data) through the OpenYida CLI, plus a right-sidebar workbench that opens them in the built-in browser.
+  zh: 通过 OpenYida CLI 给 Agent 14 个创建、修改钉钉宜搭应用（应用、表单、页面、Schema、数据）的工具，并在右侧栏工作台里用内置浏览器打开查看。
