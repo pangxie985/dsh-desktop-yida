@@ -1,0 +1,43 @@
+{
+  "format": 1,
+  "title": {
+    "en": "dsh-desktop-yida index",
+    "zh": "dsh-desktop-yida 官方索引"
+  },
+  "description": {
+    "en": "A DSH plugin that creates and edits DingTalk Yida apps with AI.",
+    "zh": "用 AI 创建、修改钉钉宜搭（Yida）应用的 DSH 插件。"
+  },
+  "plugins": [
+    {
+      "name": "dsh-desktop-yida",
+      "title": {
+        "en": "Yida AI (dsh-desktop-yida)",
+        "zh": "宜搭 AI 开发（dsh-desktop-yida）"
+      },
+      "description": {
+        "en": "Create and edit DingTalk Yida apps from DeepSeek Harness with natural language: 14 tools for apps, forms, pages, schema and data, plus a sidebar workbench. Built on the OpenYida CLI.",
+        "zh": "在 DeepSeek Harness 里用自然语言创建/修改钉钉宜搭应用：14 个工具覆盖建应用、建改表单、发布页面、读 Schema、查数据；右侧栏「宜搭工作台」可直接打开应用查看。基于开源 CLI OpenYida。"
+      },
+      "author": "pangxie985",
+      "homepage": "https://github.com/pangxie985/dsh-desktop-yida",
+      "repository": {
+        "url": "https://github.com/pangxie985/dsh-desktop-yida"
+      },
+      "versions": [
+        {
+          "version": "0.2.0",
+          "publishTimestamp": 1792930240,
+          "source": {
+            "type": "git",
+            "url": "https://github.com/pangxie985/dsh-desktop-yida",
+            "commit": "ead15dce039d88b5e0704dffc6cc098705d6c715"
+          },
+          "engines": {
+            "dsh": ">=0.2.0-rc.1"
+          }
+        }
+      ]
+    }
+  ]
+}

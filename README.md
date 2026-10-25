@@ -274,6 +274,44 @@ npm run smoke   # 用真实 openyida CLI 跑只读命令（不写任何数据）
 
 client 半是手写的 `window.__ModuleLoader__.load({ id, factory })` 单文件，`require('react')` 由宿主的平台模块表解析。省掉构建链，改完直接生效。
 
+## 插件市场 / 索引
+
+**仓库被 fork 或 star 不会被任何市场自动收录。** DSH 的插件市场是「索引源驱动」的，需要主动登记：
+
+### 官方市场（DSH 自带，「插件 → 发现」）
+
+官方市场读的是**索引源 URL**（format 1 的 JSON）。本仓库已经准备好一份，并用官方校验器 `@deepseek-ai/dsh-plugin-market-index` 验证通过：
+
+```
+https://raw.githubusercontent.com/pangxie985/dsh-desktop-yida/main/market/index.json
+```
+
+添加方式：
+
+1. 插件页 → **发现** → **添加索引源**；
+2. 粘贴上面的 URL，保存；
+3. 列表里就会出现「**宜搭 AI 开发（dsh-desktop-yida）**」，点安装。
+
+> 索引里的安装源是 **git + commit 固定**（`git+https://github.com/...#<40位 SHA>`），所以装到的是可复现的版本，不会跟着 `main` 漂移。
+> 发新版本时重新跑 `node scripts/build-market-index.mjs` 更新 commit，再提交即可。
+
+### 第三方市场 dshmarket
+
+[dshmarket](https://github.com/dsh-market/dsh-market) 的目录来自**它自己发布的 npm 包里的 `plugins.json`**（见其 `catalog-npm.ts`）。想被它收录需要：
+
+1. 把插件**发布到 npm**（它优先安装「经仓库验证的 npm 包」）；
+2. 向它的 catalog 仓库提 PR，在 `plugins.json` 里加一条条目。
+
+### 让安装体验最好：发布到 npm
+
+目前索引用的是 git 源，安装时 pnpm 会拉整仓源码。如果发布到 npm：
+
+```bash
+npm publish          # 之后可把 market/index.json 的 source 改成 { "type": "npm" }
+```
+
+这样安装只需数秒、无需本地构建，也更容易被第三方市场收录。
+
 ## License
 
 [MIT](./LICENSE)
