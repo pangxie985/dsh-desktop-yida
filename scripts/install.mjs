@@ -70,10 +70,24 @@ const log = (msg) => console.log('  ' + msg)
 const step = (msg) => console.log('==> ' + msg)
 const linkPathOf = (name) => join(NODE_MODULES, name)
 
+/**
+ * 路径是否「存在」——含悬空联接。
+ * `existsSync` 对悬空 junction 返回 false，但那正是"插件目录被搬走"后的典型状态，
+ * 不识别会导致重建联接时 EEXIST。用 lstat 判断更可靠。
+ */
+function pathPresent(target) {
+  try {
+    lstatSync(target)
+    return true
+  } catch {
+    return false
+  }
+}
+
 /** 建立（或重建）指向插件目录的目录联接。 */
 function ensureJunction(name) {
   const linkPath = linkPathOf(name)
-  if (existsSync(linkPath)) {
+  if (pathPresent(linkPath)) {
     const stat = lstatSync(linkPath)
     if (stat.isSymbolicLink()) {
       unlinkSync(linkPath)
@@ -90,7 +104,7 @@ function ensureJunction(name) {
 /** 删除目录联接（不存在则跳过）。 */
 function removeJunction(name) {
   const linkPath = linkPathOf(name)
-  if (!existsSync(linkPath)) return
+  if (!pathPresent(linkPath)) return
   const stat = lstatSync(linkPath)
   if (stat.isSymbolicLink()) {
     unlinkSync(linkPath)
