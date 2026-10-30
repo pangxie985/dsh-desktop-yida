@@ -11,7 +11,7 @@
 import assert from 'node:assert/strict'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { Config, __setAppLister, __setAuthResolver, __setRunner, apply } from '../lib/index.js'
+import { Config, __setAppLister, __setAuthResolver, __setLoginStarter, __setRunner, apply } from '../lib/index.js'
 
 const HERE = dirname(fileURLToPath(import.meta.url))
 /** 存在即可，用于让 resolveCli 通过；执行由替身接管。 */
@@ -40,6 +40,9 @@ __setAppLister(async (_settings, input) => ({
   ],
 }))
 
+/** 登录启动器替身：不真正 spawn openyida login。 */
+__setLoginStarter(async () => ({ ok: true, url: 'https://login.example.com/auth?state=test' }))
+
 const WRITE_COMMANDS = ['create-app', 'create-form', 'publish', 'app-online', 'app-offline']
 let rejectWrites = false
 let spawnedCommands = []
@@ -55,6 +58,7 @@ function fakeRunner(args) {
     )
   }
   if (command === 'commands') return Promise.resolve(ok({ version: '2026.10.10-1', groups: [{ id: 'app' }] }))
+  if (command === 'logout') return Promise.resolve(ok({ ok: true, loggedOut: true }))
   if (command === 'org') {
     if (args[1] === 'list') {
       return Promise.resolve(
@@ -167,6 +171,8 @@ test('注册了全部 yida_* 工具', () => {
       'yida_create_form',
       'yida_data_query',
       'yida_forms',
+      'yida_login',
+      'yida_logout',
       'yida_org_list',
       'yida_org_switch',
       'yida_patch_form',
@@ -442,6 +448,78 @@ test('路由：urls 返回三段地址', async () => {
   assert.equal(payload.workbenchUrl, 'https://www.aliwork.com/APP_TEST0001/workbench')
   assert.equal(payload.adminUrl, 'https://www.aliwork.com/APP_TEST0001/admin')
   assert.equal(payload.pageUrl, 'https://www.aliwork.com/APP_TEST0001/workbench/FORM-TEST01')
+})
+
+// ---- 登录 / 登出 ---------------------------------------------------------
+
+test('路由：POST /login/start 返回授权 URL 并排队打开', async () => {
+  const { routes } = boot()
+  const { req, res } = makeReqRes('/yida/api/login/start', { method: 'POST' })
+  await routes[0].handler(req, res)
+  assert.equal(res.status, 200)
+  const payload = JSON.parse(res.body)
+  assert.equal(payload.ok, true)
+  assert.equal(payload.url, 'https://login.example.com/auth?state=test')
+  // 同时排进了右侧栏打开队列，工作台会把它交给 DSH 内置浏览器
+  const pending = makeReqRes('/yida/api/pending')
+  await routes[0].handler(pending.req, pending.res)
+  const queue = JSON.parse(pending.res.body)
+  assert.equal(queue.items.length, 1)
+  assert.equal(queue.items[0].url, 'https://login.example.com/auth?state=test')
+})
+
+test('路由：GET /login/start 被拒（需要 POST）', async () => {
+  const { routes } = boot()
+  const { req, res } = makeReqRes('/yida/api/login/start')
+  await routes[0].handler(req, res)
+  assert.equal(res.status, 405)
+})
+
+test('路由：POST /apps 仍被拒（只读接口只接受 GET）', async () => {
+  const { routes } = boot()
+  const { req, res } = makeReqRes('/yida/api/apps', { method: 'POST' })
+  await routes[0].handler(req, res)
+  assert.equal(res.status, 405)
+})
+
+test('路由：/login/state 汇总登录态与 userId', async () => {
+  const { routes } = boot()
+  const { req, res } = makeReqRes('/yida/api/login/state')
+  await routes[0].handler(req, res)
+  assert.equal(res.status, 200)
+  const payload = JSON.parse(res.body)
+  assert.equal(payload.loginStatus, 'logged_in')
+  assert.equal(payload.running, false)
+})
+
+test('路由：POST /logout 调用 openyida logout', async () => {
+  const { routes } = boot()
+  spawnedCommands = []
+  const { req, res } = makeReqRes('/yida/api/logout', { method: 'POST' })
+  await routes[0].handler(req, res)
+  assert.equal(res.status, 200)
+  assert.equal(JSON.parse(res.body).ok, true)
+  assert.equal(spawnedCommands[0], 'logout')
+})
+
+test('工具 yida_login：返回 URL 并排队', async () => {
+  const { tool, routes } = boot()
+  const value = await tool('yida_login').execute({})
+  assert.equal(value.ok, true)
+  assert.equal(value.queuedOpen, 'https://login.example.com/auth?state=test')
+  const pending = makeReqRes('/yida/api/pending')
+  await routes[0].handler(pending.req, pending.res)
+  assert.equal(JSON.parse(pending.res.body).items[0].label, '宜搭登录')
+})
+
+test('工具 yida_logout：需要 confirm', async () => {
+  const { tool } = boot()
+  const blocked = await tool('yida_logout').execute({})
+  assert.equal(blocked.ok, false)
+  assert.match(blocked.blocked, /confirm/)
+  const done = await tool('yida_logout').execute({ confirm: true })
+  assert.equal(done.ok, true)
+  assert.equal(done.command, 'openyida logout')
 })
 
 for (const [testName, fn] of cases) {
