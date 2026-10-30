@@ -14,7 +14,8 @@
     "scripts/**/*",
     "cordis.patch.yml",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "docs/**/*"
   ],
   "dsh": {
     "bundle": {

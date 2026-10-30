@@ -2,7 +2,7 @@
 
 > 给 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)（DSH）装上一双手：**用 AI 直接创建、修改钉钉宜搭（Yida）应用**，并在右侧栏「宜搭工作台」里查看与打开应用。
 
-这是一个 DSH 插件，基于开源 CLI [OpenYida](https://github.com/openyida/openyida) 封装。你用自然语言描述需求，AI 读 Schema、生成变更、跑命令、回读校验，最后把应用丢进右侧内置浏览器里给你看。
+这是一个 DSH 插件，基于开源 CLI [OpenYida](https://github.com/openyida/openyida)（MIT）封装。你用自然语言描述需求，AI 读 Schema、生成变更、跑命令、回读校验，最后把应用丢进右侧内置浏览器里给你看。
 
 ```
  你说话
@@ -15,42 +15,34 @@
                           client 半「宜搭工作台」⇄ DSH 内置浏览器标签页
 ```
 
----
-
 ## 目录
 
-- [先认识四个名词](#先认识四个名词)
-- [功能](#功能)
+- [它是什么](#它是什么)
+- [16 个工具](#16-个工具)
+- [右侧栏「宜搭工作台」](#右侧栏宜搭工作台)
+- [登录 / 登出](#登录--登出)
 - [安装](#安装)
-- [首次使用：登录宜搭](#首次使用登录宜搭)
-- [使用方法](#使用方法)
+- [第一次使用](#第一次使用)
+- [用法](#用法)
 - [安全闸门](#安全闸门)
 - [配置项](#配置项)
 - [常见问题](#常见问题)
 - [兼容性](#兼容性)
 - [合规提醒（请先读）](#合规提醒请先读)
-- [开发](#开发)
-- [License](#license)
+- [维护者文档](#维护者文档)
 
----
+## 它是什么
 
-## 先认识四个名词
-
-| 名词 | 是什么 | 和本插件的关系 |
+| 参与方 | 是什么 | 与本插件的关系 |
 |---|---|---|
-| **钉钉（DingTalk）** | 阿里旗下的企业协同办公平台 | 宜搭运行在钉钉生态内，账号、组织、权限都来自钉钉 |
-| **宜搭（Yida）** | 钉钉的低代码平台：可视化拖拽配置页面、表单、流程，一键发布 | 本插件操作的目标系统。企业专属站点形如 `https://xxxxxx.aliwork.com` |
-| **[OpenYida](https://github.com/openyida/openyida)** | 开源（MIT）的宜搭命令行工具，npm 包名 `openyida` | 本插件的「手」：所有真实操作都通过它执行 |
-| **DSH（DeepSeek Harness）** | 本插件运行的宿主：带工具调用能力的 AI Agent 桌面端 | 提供工具注册、右侧栏、内置浏览器 |
+| **钉钉** | 阿里旗下的企业协同办公平台 | 宜搭运行在钉钉生态内，账号/组织/权限都来自钉钉 |
+| **宜搭** | 钉钉的低代码平台：拖拽配置页面、表单、流程 | 本插件操作的目标系统。企业专属站点形如 `https://xxxxxx.aliwork.com` |
+| **OpenYida** | 开源（MIT）宜搭命令行工具，npm 包 `openyida` | 本插件的「手」：所有真实操作都通过它执行 |
+| **DSH** | 本插件运行的宿主（AI Agent 桌面端） | 提供工具注册、右侧栏、内置浏览器 |
 
-关于 OpenYida 的能力边界，值得先知道两点：
+关于 OpenYida 的能力边界，先说结论：**官方 OpenAPI 只能操作数据**（表单实例、流程实例、审批任务、附件），元数据只有只读接口；**创建/修改应用与表单结构**走的是登录态接口路径。它需要**你自己的宜搭登录态**，不占用钉钉开放平台的授权包。
 
-- **官方 OpenAPI 只能操作「数据」**（表单实例、流程实例、审批任务、附件），元数据只有只读接口；**创建/修改应用与表单结构**只能用登录态的接口，OpenYida 封装的就是这条路。
-- 它需要**你自己的宜搭登录态**（`openyida login`），不占用钉钉开放平台的授权包。
-
-## 功能
-
-### 1. 16 个 `yida_*` 工具
+## 16 个工具
 
 | 工具 | 类型 | 作用 |
 |---|---|---|
@@ -71,10 +63,10 @@
 | `yida_patch_form` | 写入 | 按 JSON Pointer 深合并改表单 |
 | `yida_publish_page` | 写入 | 编译并发布自定义页面（`.canvas.jsx`） |
 
-### 2. 右侧栏「宜搭工作台」
+## 右侧栏「宜搭工作台」
 
 - 登录态徽标、CLI 来源；
-- **「登录」/「登出」按钮**（见下）；
+- **「登录」/「登出」按钮**；
 - 口径切换：**我管理的** / **我能访问**；
 - 应用列表 → 一键「打开（工作台）」「管理台」「表单」；
 - 表单列表 → 打开表单页；
@@ -84,24 +76,17 @@
 > 内置浏览器是 DSH 桌面版自带的 Electron `<webview>`，能带登录态打开宜搭。
 > 它**不向模型暴露页面操作能力**——本插件的分工是「AI 负责改，浏览器负责看」。
 
-### 3. 登录 / 登出（不依赖浏览器代理插件）
+## 登录 / 登出
 
-工作台工具栏上的两个按钮：
+工作台工具栏两个按钮，以及对应的 `yida_login` / `yida_logout` 工具：
 
-| 按钮 | 行为 |
+| 操作 | 行为 |
 |---|---|
-| **登录** | 后台启动 `openyida login`（`OPENYIDA_NO_BROWSER=1`，不拉起系统浏览器），从 CLI 输出里抓出钉钉授权 URL，**交给 DSH 内置浏览器打开**；随后轮询登录态，成功即刷新应用列表 |
+| **登录** | 后台启动 `openyida login`（`OPENYIDA_NO_BROWSER=1`，不拉起系统浏览器），从 CLI 输出抓出钉钉授权 URL，**交给 DSH 内置浏览器打开**；随后轮询登录态，成功即刷新列表 |
 | **登出** | 调用 `openyida logout`，清空本机登录态 |
 
-模型侧也有对应工具：
-
-```
-yida_login                 # 拿授权 URL，并把 URL 排进右侧栏打开队列
-yida_logout { confirm: true }
-```
-
-**这条链路完全不需要 `dsh-browser-agent`**：只用到 DSH 自带的「浏览器」标签页（`ctx.sidebarRight.openTab('browser', …)`）。
-钉钉授权完成后，回调会打到 CLI 自己起的 `127.0.0.1` loopback 端口（默认 5 分钟超时），登录态落盘到用户目录（`%APPDATA%\openyida\auth`），desktop / web profile 共用。
+**这条链路不需要 `dsh-browser-agent`**：只用到 DSH 自带的「浏览器」标签页（`ctx.sidebarRight.openTab('browser', …)`）。
+钉钉授权完成后，回调打到 CLI 自己起的 `127.0.0.1` loopback（默认 5 分钟超时），登录态落盘到 `%APPDATA%\openyida\auth`，desktop / web 两个 profile 共用。
 
 ## 安装
 
@@ -116,13 +101,13 @@ node scripts/install.mjs
 
 安装脚本做的事情（幂等，改前自动备份 `.bak-<时间戳>`）：
 
-1. 在插件目录装好 OpenYida CLI——按 `npm` → `pnpm` → **DSH 自带 pnpm** 顺序尝试（所以「只有 DSH、没有 npm」的机器也能装上）；
+1. 在插件目录装好 OpenYida CLI —— 按 `npm` → `pnpm` → **DSH 自带 pnpm** 顺序尝试（「只有 DSH、没有 npm」的机器也能装上）；
 2. **实测 CLI 能跑**（`agent-capabilities --json`），跑不起来就 **exit 1**，绝不打印"安装完成"；
 3. 在 profile 的 `node_modules` 里建目录联接（Windows 用 junction，不需要管理员）；
 4. 往 profile 的 `package.json` 写 `"dsh-desktop-yida": "link:<插件目录>"` 并加入 `dsh.profile.bundles`；
-5. 清理 `cordis.patch.yml` 里**历史版本**写过的挂载行（新版本不再往里写，见下方「同一条目挂载两次」）。
+5. 清理 `cordis.patch.yml` 里**历史版本**写过的挂载行（新版本不再写这个文件）。
 
-装完看最后三行提示：**硬刷新 `Ctrl+Shift+R`** → **`Ctrl+Alt+B` 展开右侧栏** → 新建「宜搭工作台」标签 → 点工具栏「登录」。
+装完看最后几行提示：**硬刷新 `Ctrl+Shift+R`** → **`Ctrl+Alt+B` 展开右侧栏** → 新建「宜搭工作台」标签 → 点工具栏「登录」。
 
 其他用法：
 
@@ -137,29 +122,24 @@ node scripts/install.mjs --cli-tarball ./openyida-2026.10.30.tgz   # 离线安�
 
 | 现象 | 原因 | 处理 |
 |---|---|---|
-| `'npm' is not recognized …`，但仍打印"安装完成" | **旧版安装器**（≤ `a888449`）只 warn 不退出 | 更新到最新版后重跑；新版会改用 DSH 自带 pnpm，装不上直接 exit 1 |
-| 所有工具报 `openyida CLI 未找到` | CLI 没装上（机器无 npm/pnpm） | `--cli-tarball` 离线装，或按脚本给出的三条路处理 |
+| `'npm' is not recognized …`，但仍打印"安装完成" | **旧版安装器**只 warn 不退出 | 更新到最新版后重跑；新版会用 DSH 自带 pnpm，装不上直接 exit 1 |
+| 所有工具报 `openyida CLI 未找到` | CLI 没装上 | `--cli-tarball` 离线装，或按脚本给出的三条路处理 |
 | DSH 起不来：`failed to parse overlay … (7:1)` | **旧版安装器**把空 `[]` patch 拼成了非法 YAML | 把 `cordis.patch.yml` 恢复成 `[]`（或删掉里面 `dsh-desktop-yida` 那几行）后重启；新版不会再写这个文件 |
 | 配置里出现两个 `id: dsh-desktop-yida` | **旧版安装器**同时写 `bundles` 和 patch | 新版只写 `bundles`；重跑一次安装脚本即可自动清掉历史 patch 行 |
 | 装完右侧栏找不到工作台 | client bundle 需要重新注入 | `Ctrl+Shift+R` 硬刷新，再 `Ctrl+Alt+B` 展开侧栏 |
 
-> **为什么 GUI 插件管理器里装不了**：npm 上还没有这个包（见「发布到 npm」），GUI 走的是 pnpm + git 源，而 pnpm 需要 git。
-> 「只有 DSH、没有 git / npm」的机器请用上面的 `git clone`（或用 GitHub 的 Download ZIP 解压）+ `node scripts/install.mjs`。
+> **GUI 插件管理器里装不了**：npm 上还没有这个包，GUI 走 pnpm + git 源，需要 git。
+> 「没有 git / npm」的机器请用上面的 `git clone`（或 Download ZIP 解压）+ `node scripts/install.mjs`。
 
-## 首次使用：登录宜搭
+## 第一次使用
 
-```bash
-# 用插件目录里那份 CLI（推荐，版本和插件一起管）
-node node_modules/openyida/bin/yida.js login
+1. 装完先硬刷新（`Ctrl+Shift+R`）；
+2. 右侧栏 `Ctrl+Alt+B` → 新建「宜搭工作台」→ 点 **「登录」**，在内置浏览器里完成钉钉授权；
+3. 让 AI 调 `yida_status`，看到 `loginStatus: "ok"` 就通了。
 
-# 或者你已全局装过
-openyida login
-```
-
-登录成功后，在 DSH 里让 AI 调 `yida_status`，看到 `loginStatus: "ok"` 就通了。
 多组织账号可以 `yida_org_list` 看有哪些组织、`yida_org_switch` 切过去。
 
-## 使用方法
+## 用法
 
 ### A. 直接对 AI 说人话（推荐）
 
@@ -191,7 +171,7 @@ node node_modules/openyida/bin/yida.js create-form create APP_XXXXXXXX "客户�
 node node_modules/openyida/bin/yida.js data query form APP_XXXXXXXX FORM-XXXXXXXX --page 1 --size 20
 ```
 
-### 一个真实的字段定义示例
+### 字段定义示例
 
 建表单时传给 `yida_create_form` 的 `fieldsFile`：
 
@@ -200,14 +180,12 @@ node node_modules/openyida/bin/yida.js data query form APP_XXXXXXXX FORM-XXXXXXX
   { "type": "Divider", "title": "设备信息", "dividerType": "bold-with-thin" },
   { "type": "TextField", "label": "设备名称", "required": true, "placeholder": "请输入设备名称" },
   { "type": "TextField", "label": "设备编号", "required": true },
-  { "type": "Divider", "title": "客户信息", "dividerType": "bold-with-thin" },
-  { "type": "TextField", "label": "客户名称" },
-  { "type": "TextField", "label": "客户编号" },
+  { "type": "SelectField", "label": "设备类型", "options": ["烟感", "燃气"] },
   { "type": "AddressField", "label": "设备定位" }
 ]
 ```
 
-常用组件：`TextField` 单行文本、`TextareaField` 多行、`NumberField` 数字、`SelectField` 下拉、`RadioField` 单选、`CheckboxField` 多选、`DateField` 日期、`EmployeeField` 成员、`AddressField` 地址/定位、`AttachmentField` 附件、`ImageField` 图片、`TableField` 子表格、`Divider` 分组标题、`ColumnContainer` 分栏。
+常用组件：`TextField`、`TextareaField`、`NumberField`、`SelectField`、`RadioField`、`CheckboxField`、`DateField`、`EmployeeField`、`AddressField`、`AttachmentField`、`ImageField`、`TableField`、`Divider`、`ColumnContainer`。
 完整清单见 [OpenYida 字段速查](https://github.com/openyida/openyida/blob/main/yida-skills/references/field-and-url-reference.md)。
 
 ## 安全闸门
@@ -219,10 +197,7 @@ node node_modules/openyida/bin/yida.js data query form APP_XXXXXXXX FORM-XXXXXXX
 
 任何一条不满足，工具**不执行**，只回显将要运行的完整命令。所有写工具都支持 `dryRun: true`，先看命令再决定。
 
-此外：
-
-- `/yida/api/*` 只暴露只读接口，且只接受回环 Host（防 DNS rebinding）；
-- 不做批量、无人值守的改造 —— 这类操作风险与合规成本都太高。
+此外：`/yida/api/*` 只暴露只读接口且只接受回环 Host（防 DNS rebinding）；不做批量、无人值守的改造。
 
 ## 配置项
 
@@ -230,8 +205,8 @@ node node_modules/openyida/bin/yida.js data query form APP_XXXXXXXX FORM-XXXXXXX
 
 | 键 | 默认 | 说明 |
 |---|---|---|
-| `cliPath` | 空 | openyida 入口绝对路径；留空则依次找：插件自带 `node_modules` → `OPENYIDA_CLI` 环境变量 → `PATH` |
-| `projectDir` | 空 | CLI 工作目录（生成的 `.cache/openyida` 产物落这里）；留空用宿主进程 cwd |
+| `cliPath` | 空 | openyida 入口绝对路径；留空依次找：插件自带 `node_modules` → `OPENYIDA_CLI` → 模块解析 → `PATH` |
+| `projectDir` | 空 | CLI 工作目录（生成的 `.cache/openyida` 落这里）；留空用宿主进程 cwd |
 | `baseUrl` | 空 | 宜搭站点；**留空自动用当前登录站点**（企业专属站点不是 `www.aliwork.com`，强烈建议留空） |
 | `allowRemoteWrites` | `true` | 关掉后所有写入工具一律拒绝 |
 | `timeoutMs` | `180000` | 单次 CLI 调用超时 |
@@ -240,23 +215,23 @@ node node_modules/openyida/bin/yida.js data query form APP_XXXXXXXX FORM-XXXXXXX
 ## 常见问题
 
 **Q：`yida_apps` 返回 0 个应用，但我明明有应用？**
-OpenYida 的 `app-list` 会硬编码 `creator=<我的 userId>`，只列「我自己创建的」。别人创建、而你是管理员的应用不会出现。
+OpenYida 的 `app-list` 硬编码 `creator=<我的 userId>`，只列「我自己创建的」。别人创建、而你是管理员的应用不会出现。
 用 `yida_apps { scope: "admin" }`（我是管理员）或 `{ scope: "all" }`（我能访问的全部），右侧栏工作台也有对应切换。
 
 **Q：生成的链接打不开 / 指向 `www.aliwork.com`？**
-你的宜搭是专属站点（形如 `https://xxxxxx.aliwork.com`）。`baseUrl` 留空时插件会自动读登录站点；如果你手工填了 `baseUrl`，请改成自己的站点。
+你的宜搭是专属站点（形如 `https://xxxxxx.aliwork.com`）。`baseUrl` 留空时插件会自动读登录站点；手工填了 `baseUrl` 请改成自己的站点。
 
 **Q：右侧栏找不到「宜搭工作台」？**
-① 先在 GUI 里硬刷新一次（`Ctrl+Shift+R`）让 client 半加载；② 右侧栏默认是收起的，按 `Ctrl+Alt+B` 展开；③ 展开后在 guide / 新建标签里找。
+① 先硬刷新（`Ctrl+Shift+R`）让 client 半加载；② 右侧栏默认收起，按 `Ctrl+Alt+B` 展开；③ 展开后在 guide / 新建标签里找。
+
+**Q：登录按钮点了没反应？**
+确认「宜搭工作台」标签页开着（授权 URL 是通过它交给内置浏览器的）。也可以直接对 AI 说「登录宜搭」，效果一样。
 
 **Q：改了代码什么时候生效？**
-`lib/client.js`（client 半）会自动热加载；`lib/index.js`（Host 半）**必须重启 DSH**。
-
-**Q：安装时报 `Cannot find module '@babel/standalone'`？**
-OpenYida CLI 的依赖没装全。执行 `npm install --prefix . openyida` 后重试（`scripts/install.mjs` 默认会做）。
+`lib/client.js`（client 半）热加载；`lib/index.js`（Host 半）**必须重启 DSH**。
 
 **Q：登录态过期？**
-重新 `openyida login`。登录态存在用户目录（`%APPDATA%\openyida\auth`），与 DSH profile 无关，desktop / web 两个 profile 共用。
+点工作台「登录」重新授权；登录态存在 `%APPDATA%\openyida\auth`，与 DSH profile 无关。
 
 ## 兼容性
 
@@ -265,88 +240,20 @@ OpenYida CLI 的依赖没装全。执行 `npm install --prefix . openyida` 后�
 | **DSH 桌面版**（0.2.x） | ✅ 实测通过 | ✅ | ✅（Electron `<webview>`） |
 | DSH web profile | ⚠️ 理论可用，未实测 | ❌ 不可用 | ❌ 不可用 |
 
-web 端不可用的原因不是本插件的问题，而是载体限制：
-
-1. web profile 的 DSH 运行时（0.1.x）**没有**官方的 `dsh-client-ui-sidebar-right` / `dsh-client-ui-slots` 这套右侧栏包，web 端的右侧栏由生态插件 `dsh-better-sidebar` 提供（另一套 `ctx.betterSidebar.registerTab` API）；
-2. web 版的内置浏览器是 **sandbox iframe**，而宜搭返回 `X-Frame-Options: SAMEORIGIN`，浏览器直接拒绝嵌入。
-
-所以 web 端建议只把它当「执行工具」用：AI 干活，结果用系统浏览器看。
+web 端不可用是载体限制，不是插件问题：web profile 的 DSH 运行时没有官方右侧栏/内置浏览器包，侧栏由生态插件提供另一套 API；且 web 版内置浏览器是 sandbox iframe，而宜搭返回 `X-Frame-Options: SAMEORIGIN`，浏览器直接拒绝嵌入。web 端建议只当「执行工具」用：AI 干活，结果用系统浏览器看。
 
 平台：Windows 实测通过；macOS / Linux 未实测（路径与进程调用均使用 Node API，理论上可用，欢迎 PR 反馈）。
 
 ## 合规提醒（请先读）
 
-- **OpenYida 不是钉钉官方授权工具**。它通过**登录态**调用宜搭的接口，其中「创建/修改应用与表单结构」走的是内部接口路径。
-- 《钉钉服务协议》第八条（软件使用规范）包含「通过非钉钉公司开发、授权的第三方软件、插件、外挂、系统，登录或使用软件及服务」的禁止性条款；《宜搭服务使用规则》另有系统配置、反向工程等条款。**是否适用、如何解释，认定权在钉钉**。
-- 因此建议：**只对你自己有权限的应用使用；写入前保留确认；不要在公司内部分发、运营这类工具；不要把批量导出组织数据当作常规操作。**
-- 用到生产环境前，请让公司合规/法务确认，或向宜搭官方书面确认。
-- **这不是法律意见**，条款以钉钉官网最新版本为准。
+- **OpenYida 不是钉钉官方授权工具**。它通过**登录态**调用宜搭接口，其中「创建/修改应用与表单结构」走内部接口路径。
+- 《钉钉服务协议》第八条（软件使用规范）包含禁止「通过非钉钉公司开发、授权的第三方软件、插件、外挂、系统，登录或使用软件及服务」的条款；《宜搭服务使用规则》另有系统配置、反向工程等条款。**是否适用、如何解释，认定权在钉钉**。
+- 建议：**只对你自己有权限的应用使用；写入前保留确认；不要在公司内部分发、运营这类工具；不要把批量导出组织数据当作常规操作。**
+- 用到生产环境前，请让公司合规/法务确认，或向宜搭官方书面确认。**这不是法律意见**，条款以钉钉官网最新版本为准。
 
-## 开发
+## 维护者文档
 
-```
-dsh-desktop-yida/
-├── package.json          # dsh.bundle.patch + dsh.client 声明
-├── cordis.patch.yml      # profile 挂载行
-├── lib/
-│   ├── index.js          # Host 半：16 个工具 + /yida/api/* 路由
-│   ├── client.js         # Client 半：window.__ModuleLoader__ bundle（宜搭工作台）
-│   ├── yida-cli.js       # CLI 定位 / 参数编译 / JSON 解析 / URL 推导
-│   ├── yida-auth.js      # 登录态与只读接口桥接（应用列表口径、站点识别）
-│   └── schema.js         # defineTool / defineConfig 同形实现（零外部依赖）
-├── scripts/install.mjs   # 安装 / 卸载（步骤顺序有讲究）
-├── tools/                # 排查脚本：组织清单、应用口径对比
-└── test/                 # 58 项测试 + 假 CLI + 真实 CLI 冒烟
-```
-
-```bash
-npm test        # 58 项：参数/URL/JSON、Host 工具与路由、client bundle 契约
-npm run smoke   # 用真实 openyida CLI 跑只读命令（不写任何数据）
-```
-
-**加一个新工具**：在 `lib/yida-cli.js` 的 `buildArgs()` 里加一个 operation，再在 `lib/index.js` 的 tools 数组里用 `readTool(...)` / `writeTool(...)` 注册即可；测试里补一条参数编译用例。
-
-### 为什么不用 bundler
-
-client 半是手写的 `window.__ModuleLoader__.load({ id, factory })` 单文件，`require('react')` 由宿主的平台模块表解析。省掉构建链，改完直接生效。
-
-## 插件市场 / 索引
-
-**仓库被 fork 或 star 不会被任何市场自动收录。** DSH 的插件市场是「索引源驱动」的，需要主动登记：
-
-### 官方市场（DSH 自带，「插件 → 发现」）
-
-官方市场读的是**索引源 URL**（format 1 的 JSON）。本仓库已经准备好一份，并用官方校验器 `@deepseek-ai/dsh-plugin-market-index` 验证通过：
-
-```
-https://raw.githubusercontent.com/pangxie985/dsh-desktop-yida/main/market/index.json
-```
-
-添加方式：
-
-1. 插件页 → **发现** → **添加索引源**；
-2. 粘贴上面的 URL，保存；
-3. 列表里就会出现「**宜搭 AI 开发（dsh-desktop-yida）**」，点安装。
-
-> 索引里的安装源是 **git + commit 固定**（`git+https://github.com/...#<40位 SHA>`），所以装到的是可复现的版本，不会跟着 `main` 漂移。
-> 发新版本时重新跑 `node scripts/build-market-index.mjs` 更新 commit，再提交即可。
-
-### 第三方市场 dshmarket
-
-[dshmarket](https://github.com/dsh-market/dsh-market) 的目录来自**它自己发布的 npm 包里的 `plugins.json`**（见其 `catalog-npm.ts`）。想被它收录需要：
-
-1. 把插件**发布到 npm**（它优先安装「经仓库验证的 npm 包」）；
-2. 向它的 catalog 仓库提 PR，在 `plugins.json` 里加一条条目。
-
-### 让安装体验最好：发布到 npm
-
-目前索引用的是 git 源，安装时 pnpm 会拉整仓源码。如果发布到 npm：
-
-```bash
-npm publish          # 之后可把 market/index.json 的 source 改成 { "type": "npm" }
-```
-
-这样安装只需数秒、无需本地构建，也更容易被第三方市场收录。
+开发、测试、发布、插件市场上架等维护者向内容见 [docs/MAINTAINER.md](./docs/MAINTAINER.md)。
 
 ## License
 
