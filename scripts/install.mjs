@@ -181,13 +181,18 @@ if (args.uninstall) {
 // ---- 0. OpenYida CLI（先备好，避免装完插件却跑不起来） -------------------
 if (!args.skipCli && !hasLocalCli()) {
   step('安装 OpenYida CLI 到插件目录（node_modules/openyida）')
-  const result = spawnSync('npm', ['install', 'openyida@latest', '--no-audit', '--no-fund', '--loglevel=error'], {
-    cwd: PLUGIN_DIR,
-    stdio: 'inherit',
-    shell: true,
-  })
+  // --no-save：不要把 package.json / package-lock.json 改脏；依赖范围以仓库提交的为准
+  const result = spawnSync(
+    'npm',
+    ['install', 'openyida@latest', '--no-save', '--no-audit', '--no-fund', '--loglevel=error'],
+    {
+      cwd: PLUGIN_DIR,
+      stdio: 'inherit',
+      shell: true,
+    },
+  )
   if (result.status !== 0 || !hasLocalCli()) {
-    console.warn('    ⚠ 自动安装失败。请手动执行：npm install --prefix "' + PLUGIN_DIR + '" openyida')
+    console.warn('    ⚠ 自动安装失败。请手动执行：npm install --prefix "' + PLUGIN_DIR + '" --no-save openyida')
   } else {
     log('OpenYida CLI 就绪')
   }

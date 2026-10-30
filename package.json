@@ -58,6 +58,6 @@
   "author": "dsh-desktop-yida contributors",
   "license": "MIT",
   "dependencies": {
-    "openyida": "^2026.10.25"
+    "openyida": "^2026.10.30"
   }
 }
