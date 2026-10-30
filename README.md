@@ -50,11 +50,13 @@
 
 ## 功能
 
-### 1. 14 个 `yida_*` 工具
+### 1. 16 个 `yida_*` 工具
 
 | 工具 | 类型 | 作用 |
 |---|---|---|
 | `yida_status` | 只读 | CLI 版本、登录态、工作目录 —— 开工前先跑它 |
+| `yida_login` | 本地 | 发起登录：拿钉钉授权 URL 并交给右侧栏，用 DSH 内置浏览器完成授权 |
+| `yida_logout` | 本地 | 退出登录（`confirm: true`，只清本机凭据） |
 | `yida_org_list` | 只读 | 列出登录态可访问的组织 |
 | `yida_org_switch` | 写入 | 切换本地登录组织（只改本地凭据指针，不动宜搭数据） |
 | `yida_apps` | 只读 | 列应用。`scope`：`mine` / `admin`（我是管理员）/ `all`（我能访问的全部） |
@@ -103,7 +105,8 @@ yida_logout { confirm: true }
 
 ## 安装
 
-**前置**：DSH 桌面版、Node.js ≥ 20、一个能登录宜搭的钉钉账号。
+**前置**：DSH 桌面版 + 一个能登录宜搭的钉钉账号。
+**不需要**全局安装 openyida，也不需要手动改 DSH 配置。
 
 ```bash
 git clone https://github.com/pangxie985/dsh-desktop-yida.git
@@ -111,24 +114,37 @@ cd dsh-desktop-yida
 node scripts/install.mjs
 ```
 
-安装脚本做四件事（幂等，改前自动备份 `.bak-<时间戳>`）：
+安装脚本做的事情（幂等，改前自动备份 `.bak-<时间戳>`）：
 
-1. 在插件目录 `npm install openyida`（这样你不用全局装 CLI）；
-2. 在 profile 的 `node_modules` 里建目录联接（Windows 用 junction，不需要管理员）；
-3. 往 profile 的 `package.json` 写 `"dsh-desktop-yida": "link:<插件目录>"` 并加入 `dsh.profile.bundles`；
-4. 最后才往 `cordis.patch.yml` 写挂载行。
+1. 在插件目录装好 OpenYida CLI——按 `npm` → `pnpm` → **DSH 自带 pnpm** 顺序尝试（所以「只有 DSH、没有 npm」的机器也能装上）；
+2. **实测 CLI 能跑**（`agent-capabilities --json`），跑不起来就 **exit 1**，绝不打印"安装完成"；
+3. 在 profile 的 `node_modules` 里建目录联接（Windows 用 junction，不需要管理员）；
+4. 往 profile 的 `package.json` 写 `"dsh-desktop-yida": "link:<插件目录>"` 并加入 `dsh.profile.bundles`；
+5. 清理 `cordis.patch.yml` 里**历史版本**写过的挂载行（新版本不再往里写，见下方「同一条目挂载两次」）。
 
-> **顺序是有讲究的**：DSH 桌面版会热监听 profile 配置。如果配置先出现一个还解析不到的包名，加载器会失败甚至把宿主重启。所以脚本严格按「先让包可解析，再改配置」执行——这也是我自己踩过的坑。
-
-**重启 DSH** 让 Host 半生效（会中断当前会话）。
+装完看最后三行提示：**硬刷新 `Ctrl+Shift+R`** → **`Ctrl+Alt+B` 展开右侧栏** → 新建「宜搭工作台」标签 → 点工具栏「登录」。
 
 其他用法：
 
 ```bash
-node scripts/install.mjs --profile web   # 装到 web profile（注意：web 端侧栏不可用，见「兼容性」）
-node scripts/install.mjs --uninstall     # 卸载
-node scripts/install.mjs --skip-cli      # 不自动装 openyida（你自己管）
+node scripts/install.mjs --profile web        # 装到 web profile（web 端没有右侧栏，见「兼容性」）
+node scripts/install.mjs --uninstall          # 卸载
+node scripts/install.mjs --skip-cli           # 不自动装 openyida（你自己保证 CLI 可用）
+node scripts/install.mjs --cli-tarball ./openyida-2026.10.30.tgz   # 离线安装 CLI
 ```
+
+### 装不上 / 装完不能用？先看这里
+
+| 现象 | 原因 | 处理 |
+|---|---|---|
+| `'npm' is not recognized …`，但仍打印"安装完成" | **旧版安装器**（≤ `a888449`）只 warn 不退出 | 更新到最新版后重跑；新版会改用 DSH 自带 pnpm，装不上直接 exit 1 |
+| 所有工具报 `openyida CLI 未找到` | CLI 没装上（机器无 npm/pnpm） | `--cli-tarball` 离线装，或按脚本给出的三条路处理 |
+| DSH 起不来：`failed to parse overlay … (7:1)` | **旧版安装器**把空 `[]` patch 拼成了非法 YAML | 把 `cordis.patch.yml` 恢复成 `[]`（或删掉里面 `dsh-desktop-yida` 那几行）后重启；新版不会再写这个文件 |
+| 配置里出现两个 `id: dsh-desktop-yida` | **旧版安装器**同时写 `bundles` 和 patch | 新版只写 `bundles`；重跑一次安装脚本即可自动清掉历史 patch 行 |
+| 装完右侧栏找不到工作台 | client bundle 需要重新注入 | `Ctrl+Shift+R` 硬刷新，再 `Ctrl+Alt+B` 展开侧栏 |
+
+> **为什么 GUI 插件管理器里装不了**：npm 上还没有这个包（见「发布到 npm」），GUI 走的是 pnpm + git 源，而 pnpm 需要 git。
+> 「只有 DSH、没有 git / npm」的机器请用上面的 `git clone`（或用 GitHub 的 Download ZIP 解压）+ `node scripts/install.mjs`。
 
 ## 首次使用：登录宜搭
 
@@ -273,7 +289,7 @@ dsh-desktop-yida/
 ├── package.json          # dsh.bundle.patch + dsh.client 声明
 ├── cordis.patch.yml      # profile 挂载行
 ├── lib/
-│   ├── index.js          # Host 半：14 个工具 + /yida/api/* 只读路由
+│   ├── index.js          # Host 半：16 个工具 + /yida/api/* 路由
 │   ├── client.js         # Client 半：window.__ModuleLoader__ bundle（宜搭工作台）
 │   ├── yida-cli.js       # CLI 定位 / 参数编译 / JSON 解析 / URL 推导
 │   ├── yida-auth.js      # 登录态与只读接口桥接（应用列表口径、站点识别）

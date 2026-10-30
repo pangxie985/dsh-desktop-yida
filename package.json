@@ -41,7 +41,7 @@
     "ai-agent"
   ],
   "scripts": {
-    "test": "node test/cli.test.mjs && node test/plugin.test.mjs && node test/login.test.mjs && node test/client.test.mjs",
+    "test": "node test/cli.test.mjs && node test/plugin.test.mjs && node test/login.test.mjs && node test/patch-file.test.mjs && node test/client.test.mjs",
     "smoke": "node test/smoke.mjs",
     "install:desktop": "node scripts/install.mjs --profile desktop",
     "install:web": "node scripts/install.mjs --profile web",
